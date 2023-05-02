@@ -10,7 +10,8 @@ import styles from "@/styles/TodoList.module.css";
 // TodoItem 컴포넌트를 정의합니다.
 const TodoItem = ({ todo, onToggle, onDelete }) => {
 
-  const createdAt = new Date(todo.createdAt).toLocaleDateString();
+  const createdAt = new Date(`${todo.createdAt}T00:00:00.000Z`).toLocaleDateString();
+
   // 각 할 일 항목을 렌더링합니다.
   return (
     <li className={styles.todoItem}>
