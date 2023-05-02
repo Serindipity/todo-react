@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import TodoItem from "@/components/TodoItem";
 import styles from "@/styles/TodoList.module.css";
-
 import { db } from "@/firebase";
 import {
   collection,
@@ -12,6 +11,7 @@ import {
   updateDoc,
   deleteDoc,
   orderBy,
+  serverTimestamp, // Timestamp 생성
 } from "firebase/firestore";
 
 const todoCollection = collection(db, "todos");
@@ -21,14 +21,12 @@ const TodoList = () => {
   const [input, setInput] = useState("");
 
   const getTodos = async () => {
-    const q = query(todoCollection);
+    const q = query(todoCollection, orderBy("createdAt", "asc")); // 생성된 시간을 기준으로 오름차순 정렬
     const results = await getDocs(q);
     const newTodos = [];
-
     results.docs.forEach((doc) => {
       newTodos.push({ id: doc.id, ...doc.data() });
     });
-
     setTodos(newTodos);
   };
 
@@ -38,13 +36,12 @@ const TodoList = () => {
 
   const addTodo = async () => {
     if (input.trim() === "") return;
-
     const docRef = await addDoc(todoCollection, {
       text: input,
       completed: false,
+      createdAt: serverTimestamp(), // 생성 시각 추가
     });
-
-    setTodos([...todos, { id: docRef.id, text: input, completed: false }]);
+    setTodos([...todos, { id: docRef.id, text: input, completed: false, createdAt: new Date() }]); // 로컬에서는 자바스크립트의 new Date()로 생성시각 저장
     setInput("");
   };
 
@@ -58,40 +55,28 @@ const TodoList = () => {
         return todo;
       }
     });
-
     setTodos(newTodos);
   };
 
   const deleteTodo = (id) => {
     const todoDoc = doc(todoCollection, id);
     deleteDoc(todoDoc);
-
-    setTodos(
-      todos.filter((todo) => {
-        return todo.id !== id;
-      })
-    );
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
 
   return (
-    <div className={styles.container}>
-      <h1 className="text-xl mb-4 font-bold underline underline-offset-4 decoration-wavy">
-        Todo List
-      </h1>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Add a new todo..."
-        className="border border-gray-400 py-2 px-4 rounded-lg shadow-sm mb-4 w-full"
-      />
-      <button
-        className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow-sm hover:bg-blue-600 mb-4"
-        onClick={addTodo}
-      >
-        Add Todo
-      </button>
-      <ul className="space-y-2">
+    <div className={styles.todoList}>
+      <h1>Todo List</h1>
+      <div className={styles.inputContainer}>
+        <input
+          type="text"
+          placeholder="Add a Todo"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button onClick={addTodo}>Add</button>
+      </div>
+      <ul>
         {todos.map((todo) => (
           <TodoItem
             key={todo.id}
