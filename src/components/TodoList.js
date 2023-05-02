@@ -39,14 +39,13 @@ const TodoList = () => {
 
     // Firestore 에서 할 일 목록을 조회합니다.
     const results = await getDocs(q);
-    const newTodos = [];
 
-    // 가져온 할 일 목록을 newTodos 배열에 담습니다.
-    results.docs.forEach((doc) => {
-      // console.log(doc.data());
-      // id 값을 Firestore 에 저장한 값으로 지정하고, 나머지 데이터를 newTodos 배열에 담습니다.
-      newTodos.push({ id: doc.id, ...doc.data() });
-    });
+    const newTodos = results.docs.map((doc) => ({
+      id: doc.id,
+      text: doc.data().text,
+      completed: doc.data().completed,
+      createdAt: doc.data().createdAt.toDate(),
+      }));
 
     setTodos(newTodos);
   };
@@ -68,6 +67,7 @@ const TodoList = () => {
     // ...todos => {id: 1, text: "할일1", completed: false}, {id: 2, text: "할일2", completed: false}}, ..
 
     // Firestore 에 추가한 할 일을 저장합니다.
+
     const docRef = await addDoc(todoCollection, {
       text: input,
       completed: false,
@@ -75,7 +75,7 @@ const TodoList = () => {
     });
 
     // id 값을 Firestore 에 저장한 값으로 지정합니다.
-    setTodos([...todos, { id: docRef.id, text: input, completed: false }]);
+    setTodos([...todos, { id: docRef.id, text: input, completed: false, createdAt: new Date() }]);
     setInput("");
   };
 
